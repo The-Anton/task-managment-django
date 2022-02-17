@@ -1,6 +1,6 @@
 from re import template
 from urllib import request
-
+from django.db.models import F
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
@@ -18,12 +18,6 @@ from tasks.models import Task
 class AuthorisedTaskManager(LoginRequiredMixin):
     def get_queryset(self):
         return Task.objects.filter(deleted=False, user=self.request.user)
-class UserLoginView(LoginView):
-    template_name = "user_login.html"
-class UserCreateView(CreateView):
-    form_class = UserCreationForm
-    template_name = "user_create.html"
-    success_url = "/user/login"
 
 def sessions_storage_view(request):
 
@@ -31,6 +25,27 @@ def sessions_storage_view(request):
     request.session['total_views'] = total_views + 1
     return HttpResponse(f"Total Views is {total_views} an the user is {request.user}")
 
+def priority_cascade(form, user):
+    conflicting_priority = form.cleaned_data["priority"]
+    updated_conflicting_task = []
+
+    while True:
+        if Task.objects.filter(user=user, completed=False, deleted=False, priority=conflicting_priority).exists():
+            task = Task.objects.get(user=user, completed=False, deleted=False, priority=conflicting_priority)
+            task.priority += 1
+            updated_conflicting_task.append(task)
+            conflicting_priority += 1
+        else: 
+            break
+    
+    Task.objects.bulk_update(updated_conflicting_task, ["priority"])
+
+class UserLoginView(LoginView):
+    template_name = "user_login.html"
+class UserCreateView(CreateView):
+    form_class = UserCreationForm
+    template_name = "user_create.html"
+    success_url = "/user/login"
 class TaskCreateFrom(ModelForm):
 
     def clean_title(self):
@@ -41,21 +56,7 @@ class TaskCreateFrom(ModelForm):
 
     class Meta:
         model = Task
-        fields = ["title", "description", "completed"]
-
-class GenericTaskDeleteView(AuthorisedTaskManager, DeleteView):
-    model = Task
-    template_name = "task_delete.html"
-    success_url = "/tasks"
-
-class GenericTaskDetailView(AuthorisedTaskManager, DetailView):
-    model = Task
-    template_name = "task_detail.html"
-class GenericTaskUpdateView(AuthorisedTaskManager, UpdateView):
-    model = Task
-    form_class = TaskCreateFrom
-    template_name = "task_update.html"
-    success_url = "/tasks"
+        fields = ["title", "description", "priority", "completed"]
 
 class GenericTaskCreateView(CreateView):
     form_class = TaskCreateFrom
@@ -63,36 +64,51 @@ class GenericTaskCreateView(CreateView):
     success_url = "/tasks"
 
     def form_valid(self, form):
+        priority_cascade(form, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
-class GenericTaskCompleteView(LoginRequiredMixin, ListView):
-    queryset = Task.objects.all().filter(completed=True)
-    template_name = "completed.html"
-    context_objext_name = "completed_tasks"
-    paginate_by = 5
+# CRUD operation views
+class GenericTaskDetailView(AuthorisedTaskManager, DetailView):
+    model = Task
+    template_name = "task_detail.html"
+class GenericTaskDeleteView(AuthorisedTaskManager, DeleteView):
+    model = Task
+    template_name = "task_delete.html"
+    success_url = "/tasks"
+class GenericTaskUpdateView(AuthorisedTaskManager, UpdateView):
+    model = Task
+    form_class = TaskCreateFrom
+    template_name = "task_update.html"
+    success_url = "/tasks"
+class GenericTaskMarkCompletedView(AuthorisedTaskManager, View):
 
-class GenericTaskMarkCompletedView(LoginRequiredMixin, View):
-
-    def get_queryset(self, index):
-        Task.objects.filter(id=index).update(completed=True)
+    def get(self, request, pk):
+        Task.objects.filter(id=pk).update(completed=True)
         return HttpResponseRedirect("/tasks")
 
-class GenericTaskView(LoginRequiredMixin, ListView):
-    queryset = Task.objects.filter(deleted=False)
+# List tasks
+class GenericTaskView(AuthorisedTaskManager, ListView):
+    queryset = Task.objects.filter(deleted=False, completed=False)
     template_name = "tasks.html"
     context_object_name = "tasks"
     paginate_by = 5
 
     def get_queryset(self):
         search_term = self.request.GET.get("search")
-        tasks = Task.objects.filter(deleted=False, user=self.request.user)
+        tasks = Task.objects.filter(deleted=False,  completed=False, user=self.request.user).order_by('priority')
 
         if search_term:
             tasks = tasks.filter(title__icontains=search_term)
         return tasks
+
+class GenericTaskCompleteView(AuthorisedTaskManager, ListView):
+    queryset = Task.objects.filter(completed=True).order_by('priority')
+    template_name = "completed.html"
+    context_object_name = "tasks"
+    paginate_by = 5
 class CreateTaskView(View):
 
     def get(self, request):
