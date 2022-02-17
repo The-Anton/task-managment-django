@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path
-from tasks.views import (GenericTaskCreateView, GenericTaskDeleteView,
-                         GenericTaskDetailView, GenericTaskUpdateView,GenericTaskCompleteView,
-                         GenericTaskMarkCompletedView, GenericTaskView, UserCreateView, UserLoginView,
-                         all_task_view, done_task_view,
-                         sessions_storage_view)
+from tasks.views import (GenericAllTaskView, GenericTaskCompleteView,
+                         GenericTaskCreateView, GenericTaskDeleteView,
+                         GenericTaskDetailView, GenericTaskMarkCompletedView,
+                         GenericTaskUpdateView, GenericTaskView,
+                         UserCreateView, UserLoginView, sessions_storage_view)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -19,7 +19,7 @@ urlpatterns = [
     path("user/logout", LogoutView.as_view()),
     path("tasks/", GenericTaskView.as_view()),
     path("completed_task/", GenericTaskCompleteView.as_view()),
-    path("all_tasks/", all_task_view),
+    path("all_tasks/", GenericAllTaskView.as_view()),
     path("sessiontest/", sessions_storage_view),
 
 

@@ -1,9 +1,11 @@
+from multiprocessing import AuthenticationError
 from re import template
 from urllib import request
-from django.db.models import F
-from django.contrib.auth.forms import UserCreationForm
+
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.db.models import F
 from django.forms import ModelForm, ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -14,10 +16,6 @@ from django.views.generic.list import ListView
 
 from tasks.models import Task
 
-
-class AuthorisedTaskManager(LoginRequiredMixin):
-    def get_queryset(self):
-        return Task.objects.filter(deleted=False, user=self.request.user)
 
 def sessions_storage_view(request):
 
@@ -40,13 +38,34 @@ def priority_cascade(form, user):
     
     Task.objects.bulk_update(updated_conflicting_task, ["priority"])
 
+class UserCreationStyledForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        self.fields["password1"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        self.fields["password2"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        
+class UserLoginStyledForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        self.fields["password"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+class AuthorisedTaskManager(LoginRequiredMixin):
+    def get_queryset(self):
+        return Task.objects.filter(deleted=False, user=self.request.user)
 class UserLoginView(LoginView):
+    form_class = UserLoginStyledForm
     template_name = "user_login.html"
 class UserCreateView(CreateView):
-    form_class = UserCreationForm
+    form_class = UserCreationStyledForm
     template_name = "user_create.html"
     success_url = "/user/login"
 class TaskCreateFrom(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        self.fields["description"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+        self.fields["priority"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
 
     def clean_title(self):
         title = self.cleaned_data["title"]
@@ -109,6 +128,13 @@ class GenericTaskCompleteView(AuthorisedTaskManager, ListView):
     template_name = "completed.html"
     context_object_name = "tasks"
     paginate_by = 5
+
+class GenericAllTaskView(AuthorisedTaskManager, ListView):
+    queryset = Task.objects.filter(deleted=False)
+    template_name = "all.html"
+    context_object_name = "tasks"
+    paginate_by = 5
+    
 class CreateTaskView(View):
 
     def get(self, request):
@@ -151,8 +177,5 @@ def completed_task_view(request):
     completed_tasks = Task.objects.all().filter(completed=True)
     return render(request, "completed.html", {"completed_tasks": completed_tasks})
 
-def all_task_view(request):
-    tasks = Task.objects.filter(deleted=False)
-    completed_tasks = Task.objects.all().filter(completed=True)
-    return render(request, "all.html", {"tasks": tasks, "completed_tasks": completed_tasks})
+
 
