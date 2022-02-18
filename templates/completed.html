@@ -1,7 +1,7 @@
 {% extends 'task_base.html' %}
 
 {% block wrapper %}
-<p class="my-5 mx-5 text-slate-500">{{tasks | length}} tasks completed</p>
+<p class="my-5 mx-5 text-slate-500">{{completed_tasks | length}} tasks completed</p>
 
 <div class="flex justify-around items-center">
     <a class="px-7 py-2 font-bold rounded-3xl hover:bg-red-200 hover:text-red-500" href="/all_tasks">All</a>
@@ -9,7 +9,7 @@
     <a class="px-6 py-2 font-bold rounded-3xl bg-red-200 text-red-500 hover:bg-red-200 hover:text-red-500" href="/completed_task/">Completed</a>
 </div>
 
-{% for task in tasks %} 
+{% for task in completed_tasks %} 
 <div class="flex justify-between m-3 p-5 rounded-2xl bg-slate-100">
         <div class="flex-col">
             <h2 class="text-lg font-bold text-red-600 line-through"  href="/detail-task/{{task.id}}">{{task.title}}</h2>
