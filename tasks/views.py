@@ -28,14 +28,14 @@ def priority_cascade(form, user):
     updated_conflicting_task = []
 
     while True:
-        if Task.objects.filter(user=user, completed=False, deleted=False, priority=conflicting_priority).exists():
+        try:
             task = Task.objects.get(user=user, completed=False, deleted=False, priority=conflicting_priority)
             task.priority += 1
             updated_conflicting_task.append(task)
             conflicting_priority += 1
-        else: 
+        except:
             break
-    
+
     Task.objects.bulk_update(updated_conflicting_task, ["priority"])
 
 class UserCreationStyledForm(UserCreationForm):
@@ -84,7 +84,7 @@ class GenericTaskCreateView(CreateView):
 
     def form_valid(self, form):
         priority_cascade(form, self.request.user)
-        self.object = form.save()
+        self.object = form.save(commit=False)
         self.object.user = self.request.user
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
@@ -102,6 +102,13 @@ class GenericTaskUpdateView(AuthorisedTaskManager, UpdateView):
     form_class = TaskCreateFrom
     template_name = "task_update.html"
     success_url = "/tasks"
+
+    def form_valid(self, form):
+        priority_cascade(form, self.request.user)
+        self.object = form.save(commit=False)
+        self.object.save()
+        return HttpResponseRedirect("/tasks")
+
 class GenericTaskMarkCompletedView(AuthorisedTaskManager, View):
 
     def get(self, request, pk):
@@ -124,10 +131,13 @@ class GenericTaskView(AuthorisedTaskManager, ListView):
         return tasks
 
 class GenericTaskCompleteView(AuthorisedTaskManager, ListView):
-    queryset = Task.objects.filter(completed=True).order_by('priority')
+    queryset = Task.objects.filter( completed=True, deleted=False)
     template_name = "completed.html"
-    context_object_name = "tasks"
+    context_object_name = "completed_tasks"
     paginate_by = 5
+
+    def get_queryset(self):
+        return Task.objects.filter(completed=True, deleted=False, user=self.request.user).order_by("priority")
 
 class GenericAllTaskView(AuthorisedTaskManager, ListView):
     queryset = Task.objects.filter(deleted=False)
