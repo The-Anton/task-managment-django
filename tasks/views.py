@@ -104,7 +104,8 @@ class GenericTaskUpdateView(AuthorisedTaskManager, UpdateView):
     success_url = "/tasks"
 
     def form_valid(self, form):
-        priority_cascade(form, self.request.user)
+        if "priority" in form.changed_data:
+            priority_cascade(form, self.request.user)
         self.object = form.save(commit=False)
         self.object.save()
         return HttpResponseRedirect("/tasks")
