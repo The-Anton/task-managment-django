@@ -1,11 +1,18 @@
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path
+from rest_framework.routers import SimpleRouter
+from tasks.apiviews import TaskHistoryViewSet, TaskListAPI, TaskViewSet
 from tasks.views import (GenericAllTaskView, GenericTaskCompleteView,
                          GenericTaskCreateView, GenericTaskDeleteView,
                          GenericTaskDetailView, GenericTaskMarkCompletedView,
                          GenericTaskUpdateView, GenericTaskView,
                          UserCreateView, UserLoginView, sessions_storage_view)
+
+router = SimpleRouter()
+
+router.register("api/task", TaskViewSet)
+router.register("api/history", TaskHistoryViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -22,5 +29,4 @@ urlpatterns = [
     path("all_tasks/", GenericAllTaskView.as_view()),
     path("sessiontest/", sessions_storage_view),
 
-
-]
+]+ router.urls

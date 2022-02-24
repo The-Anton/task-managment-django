@@ -27,6 +27,7 @@ def priority_cascade(form, user):
     conflicting_priority = form.cleaned_data["priority"]
     updated_conflicting_task = []
 
+    print("executing priority cascading")
     while True:
         try:
             task = Task.objects.get(user=user, completed=False, deleted=False, priority=conflicting_priority)
