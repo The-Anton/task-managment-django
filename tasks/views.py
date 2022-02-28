@@ -1,7 +1,7 @@
 from multiprocessing import AuthenticationError
 from re import template
 from urllib import request
-
+from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
@@ -13,8 +13,9 @@ from django.views import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
+from bootstrap_datepicker_plus.widgets import DateTimePickerInput
 
-from tasks.models import Task
+from tasks.models import EmailScheduler, Task
 
 
 def sessions_storage_view(request):
@@ -51,16 +52,7 @@ class UserLoginStyledForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
         self.fields["password"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
-class AuthorisedTaskManager(LoginRequiredMixin):
-    def get_queryset(self):
-        return Task.objects.filter(deleted=False, user=self.request.user)
-class UserLoginView(LoginView):
-    form_class = UserLoginStyledForm
-    template_name = "user_login.html"
-class UserCreateView(CreateView):
-    form_class = UserCreationStyledForm
-    template_name = "user_create.html"
-    success_url = "/user/login"
+
 class TaskCreateFrom(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,6 +70,26 @@ class TaskCreateFrom(ModelForm):
         model = Task
         fields = ["title", "description", "priority", "completed"]
 
+class EmailReportForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["mail_time"].widget.attrs["class"] = "p-3 my-2 w-full rounded-md bg-slate-100"
+    class Meta:
+        model = EmailScheduler
+        fields = ('mail_time',)
+
+
+class UserLoginView(LoginView):
+    form_class = UserLoginStyledForm
+    template_name = "user_login.html"
+class UserCreateView(CreateView):
+    form_class = UserCreationStyledForm
+    template_name = "user_create.html"
+    success_url = "/user/login"
+
+class AuthorisedTaskManager(LoginRequiredMixin):
+    def get_queryset(self):
+        return Task.objects.filter(deleted=False, user=self.request.user)
 class GenericTaskCreateView(CreateView):
     form_class = TaskCreateFrom
     template_name = "task_create.html"
@@ -147,6 +159,17 @@ class GenericAllTaskView(AuthorisedTaskManager, ListView):
     context_object_name = "tasks"
     paginate_by = 5
     
+
+class GenericEmailReportView(AuthorisedTaskManager, CreateView):
+    form_class = EmailReportForm
+    template_name = "mail_config.html"
+    success_url = "/tasks"
+
+    def get_queryset(self):
+        return EmailScheduler.objects.filter(user=self.request.user)
+    
+    def perform_create(self):
+        pass
 class CreateTaskView(View):
 
     def get(self, request):
@@ -168,26 +191,3 @@ class TaskView(View):
 
     def post(self, request):
         pass
-
-def task_view(request):
-    tasks = Task.objects.filter(deleted=False)
-    search_term = request.GET.get("search")
-
-    if search_term:
-        tasks = tasks.filter(title__icontains=search_term)
-    return render(request, "tasks.html", {"tasks": tasks})  
-
-def delete_task_view(request, index):
-    Task.objects.filter(id=index).update(deleted=True)
-    return HttpResponseRedirect("/tasks")
-
-def done_task_view(request, index):
-    Task.objects.filter(id=index).update(completed=True)
-    return HttpResponseRedirect("/tasks")
-
-def completed_task_view(request):
-    completed_tasks = Task.objects.all().filter(completed=True)
-    return render(request, "completed.html", {"completed_tasks": completed_tasks})
-
-
-

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="flex justify-between">
+        <h1 class="my-5 text-4xl font-bold">Mail Settings</h1>
+    </div>
+    <div class="container m-2 p-2">
+        <p id="formMailTime" class="m-1 p-1">
+            {{form.mail_time.label}}
+            <br />
+            <input type="{{ form.mail_time.widget_type }}" name="{{ form.mail_time.name }}" id="{{ form.mail_time.id_for_label }}"
+            class="p-3 my-2 w-full rounded-md bg-slate-100">
+        </p>
+        
+        <br />
+        <button class="text-white bg-red-500 hover:bg-red-600 rounded-xl w-full p-3" action="submit">Submit</button>
+    </div>
+</form>
+{% endblock %}

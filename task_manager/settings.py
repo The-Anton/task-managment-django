@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
+    'bootstrap_datepicker_plus',
     "tasks"
 ]
 
@@ -131,9 +132,13 @@ LOGIN_REDIRECT_URL = "/tasks"
 LOGIN_URL="/user/login"
 LOGOUT_REDIRECT_URL="/"
 
-# redis and celery
-
-BROKER_URL = "redis://localhost:6379"
-CELERY_RESULT_BACKEND = "redis://localhost:6379"
-
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# redis and celery
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Dhaka'
+

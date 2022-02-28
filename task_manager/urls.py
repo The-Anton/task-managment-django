@@ -3,7 +3,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 from rest_framework.routers import SimpleRouter
 from tasks.apiviews import TaskHistoryViewSet, TaskListAPI, TaskViewSet
-from tasks.views import (GenericAllTaskView, GenericTaskCompleteView,
+from tasks.views import (GenericAllTaskView, GenericEmailReportView, GenericTaskCompleteView,
                          GenericTaskCreateView, GenericTaskDeleteView,
                          GenericTaskDetailView, GenericTaskMarkCompletedView,
                          GenericTaskUpdateView, GenericTaskView,
@@ -28,5 +28,7 @@ urlpatterns = [
     path("completed_task/", GenericTaskCompleteView.as_view()),
     path("all_tasks/", GenericAllTaskView.as_view()),
     path("sessiontest/", sessions_storage_view),
+    path("mail-config/", GenericEmailReportView.as_view()),
+
 
 ]+ router.urls

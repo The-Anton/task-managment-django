@@ -1,6 +1,9 @@
 from django.db import models
-
+from datetime import datetime
 from django.contrib.auth.models import User
+from django.dispatch import receiver
+from django.utils import timezone
+from django.db.models.signals import post_save
 
 STATUS_CHOICES = (
     ("PENDING", "PENDING"),
@@ -29,3 +32,11 @@ class History(models.Model):
 
     def __str__(self):
         return self.title
+
+class EmailScheduler(models.Model):
+    mail_time = models.TimeField(default=datetime.now().time())
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    last_mailed = models.DateTimeField(default=datetime.now(timezone.utc), null=True, blank=True)
+    
+    def __str__(self):
+        return self.user
