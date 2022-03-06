@@ -54,15 +54,6 @@ class ViewsTest(TestCase):
         response = views.GenericTaskCreateView.as_view()(request)
         self.assertEqual(response.status_code, 200)
 
-    def test_create_task(self):
-        self.client.login(username="admin", password="thisisa31!@")
-        self.client.post("/create-task/",task)
-        try:
-            title = Task.objects.get(priority=1).title
-        except:
-            title = None
-
-        self.assertEqual(title, "Task1")
 
 
 
