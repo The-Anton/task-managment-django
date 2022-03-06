@@ -64,36 +64,7 @@ class ViewsTest(TestCase):
 
         self.assertEqual(title, "Task1")
 
-    def test_check_priority(self):
-        self.client.login(username="admin", password="thisisa31!@")
-        self.client.post("/create-task/",task)
-        self.client.post("/create-task/",second_task)
-        try:
-            title = Task.objects.get(priority=2).title
-        except:
-            title = None
-        self.assertEqual(title, "Task2")
 
-    def test_updateView(self):
-        self.client.login(username="admin", password="thisisa31!@")
-        createtask = Task.objects.create(
-            title="Task3",
-            description="Task3 description",
-            priority=1,
-            completed=False,
-            status="PENDING",
-            user=self.user,
-        )
-        self.client.post(f"/update-task/{createtask.id}/",
-                         {
-                             "title": "Task3",
-                             "description": "Updated Task3 description",
-                             "priority": 1,
-                             "completed": True,
-                             "status": "PENDING",
-                         },
-                         )
-        self.assertEqual(Task.objects.get(id=createtask.id).description, "Updated Task3 description")
 
     def test_status_integrity(self):
         completed = Task.objects.filter(status="COMPLETED").count()
