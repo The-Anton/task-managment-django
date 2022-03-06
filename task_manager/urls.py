@@ -7,7 +7,7 @@ from tasks.views import (GenericAllTaskView, GenericEmailReportView, GenericTask
                          GenericTaskCreateView, GenericTaskDeleteView,
                          GenericTaskDetailView, GenericTaskMarkCompletedView,
                          GenericTaskUpdateView, GenericTaskView,
-                         UserCreateView, UserLoginView, sessions_storage_view)
+                         UserCreateView, UserLoginView, homepage_view, sessions_storage_view)
 
 router = SimpleRouter()
 
@@ -16,6 +16,7 @@ router.register("api/history", TaskHistoryViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", homepage_view),
     path("create-task/", GenericTaskCreateView.as_view()),
     path("update-task/<pk>", GenericTaskUpdateView.as_view()),
     path("detail-task/<pk>", GenericTaskDetailView.as_view()),

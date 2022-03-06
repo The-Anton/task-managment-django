@@ -23,14 +23,10 @@ def send_mail_client(user):
     print(content)
 
 
-@periodic_task(run_every=timedelta(minutes=1))
+@periodic_task(run_every=timedelta(seconds=60))
 def send_email_reminder():
     print("Starting to process Emails")
-    mail_configs = EmailScheduler.objects.filter(last_mailed__lt=datetime.now(timezone.utc).date(), mail_time__lte=datetime.now(timezone.utc)).select_for_update()
- 
-    mails_t = EmailScheduler.objects.all()
-    for mail in mails_t:
-        print(f"{mail.user} -- {mail.mail_time}")
+    mail_configs = EmailScheduler.objects.filter( mail_time__lte=datetime.now(timezone.utc), last_mailed__lt=datetime.now(timezone.utc).date()).select_for_update()
 
     for mail_config in mail_configs:
        user = User.objects.get(id=mail_config.user.id)

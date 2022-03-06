@@ -12,3 +12,7 @@ app = Celery("task_manager")
 app.config_from_object("django.conf:settings")
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
+@periodic_task(run_every=timedelta(seconds=30))
+def every_30_seconds():
+    print("Running Every 30 Seconds!")
+    return "Running Every 30 Seconds!"

@@ -39,4 +39,10 @@ class EmailScheduler(models.Model):
     last_mailed = models.DateTimeField(default=datetime.now(timezone.utc), null=True, blank=True)
     
     def __str__(self):
-        return self.user
+        return f"{self.mail_time}"
+
+@receiver(post_save, sender=User)
+def create_profile(sender, **kwargs):
+    if not EmailScheduler.objects.filter(user=kwargs["instance"]).exists():
+        new_schedule = EmailScheduler(user=kwargs["instance"])
+        new_schedule.save()

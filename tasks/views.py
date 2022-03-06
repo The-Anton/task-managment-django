@@ -19,10 +19,12 @@ from tasks.models import EmailScheduler, Task
 
 
 def sessions_storage_view(request):
-
     total_views = request.session.get("total_views",0)
     request.session['total_views'] = total_views + 1
     return HttpResponse(f"Total Views is {total_views} an the user is {request.user}")
+
+def homepage_view(request):
+    return render(request, 'home.html')
 
 def priority_cascade(form, user):
     conflicting_priority = form.cleaned_data["priority"]
@@ -90,7 +92,7 @@ class UserCreateView(CreateView):
 class AuthorisedTaskManager(LoginRequiredMixin):
     def get_queryset(self):
         return Task.objects.filter(deleted=False, user=self.request.user)
-class GenericTaskCreateView(CreateView):
+class GenericTaskCreateView(AuthorisedTaskManager, CreateView):
     form_class = TaskCreateFrom
     template_name = "task_create.html"
     success_url = "/tasks"
