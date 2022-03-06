@@ -55,9 +55,7 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-
-
-    def test_status_integrity(self):
+    def test_task_status(self):
         completed = Task.objects.filter(status="COMPLETED").count()
         cancelled = Task.objects.filter(status="CANCELLED").count()
         in_progress = Task.objects.filter(status="IN_PROGRESS").count()
@@ -77,3 +75,7 @@ class ApiTest(TestCase):
         self.client.login(username="admin", password="thisisa31!@")
         response = self.client.get(f"/api/task/")
         self.assertEqual(response.status_code, 200)
+
+class CeleryTest(TestCase):
+     def test_celery(self):
+        self.assertEqual(every_30_seconds(), "Running Every 30 Seconds!")
